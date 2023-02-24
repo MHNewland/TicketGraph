@@ -5,6 +5,7 @@ import matplotlib.dates as mdates
 import matplotlib.ticker as tk
 import sqlalchemy as sa
 import mplcursors as mpc
+import numpy as np
 
 def create_dictionary(table, teams, data_wanted, engine = sa.create_engine("sqlite:///TicketData.db")):
     if table == None or len(teams)==0 or len(data_wanted)==0:
@@ -136,24 +137,27 @@ def display_graph(team_dict, teams, data_requested):
                 loc[data_name_str].append(data_value)
 
 
-        #create the plots
+        #create the plots and graph for current team
         if len(data) == 1:
-            ax.plot(x, loc[data[0]], linewidth=2.0, label = f"{team}: {data[0]}")
+            ax.plot(x, loc[data[0]], linewidth=5.0, label = f"{team}: {data[0]}")
             ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.TH, interval=2))
             ax.xaxis.set_minor_locator(tk.AutoMinorLocator(2))
             ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         else:
             for i in range(len(data)):
                 if len(loc[data[i]]) == len(x): 
-                    ax[i].plot(x, loc[data[i]], linewidth=2.0, label = f"{team}: {data[i]}")
+                    ax[i].plot(x, loc[data[i]], linewidth=3.0, label = f"{team}: {data[i]}")
                     ax[i].xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.TH, interval=2))
                     ax[i].xaxis.set_minor_locator(tk.AutoMinorLocator(2))
                     ax[i].legend(loc='center left', bbox_to_anchor=(1, 0.5))
                 else:
                     print("data doesn't match")
+        #if a list doesn't have all the dates, find the one with the most dates
         if len(x)> most_info:
             most_info=len(x)
-    fig.set_figwidth(most_info/2)
+
+    #set the figure width to accommodate the 
+    fig.set_figwidth((most_info/6) + 10)
     fig.autofmt_xdate()
     fig.tight_layout(pad=.5, w_pad=0, h_pad=1)
     cursor = mpc.cursor(hover=2)
@@ -162,8 +166,14 @@ def display_graph(team_dict, teams, data_requested):
         sel_date = mdates.num2date(sel[1][0]).date() 
         if(sel_date.weekday() == mdates.TH.weekday): 
             graph_title=sel.artist.get_label()
-            anno_team, anno_data = graph_title.split(": ") 
-            sel.annotation.set_text(f"{sel.artist.get_label()}\n{mdates.num2date(sel[1][0]).date()}: {round(team_dict[anno_team][sel_date.strftime('%d-%m-%Y')][anno_data])}")
+            anno_team, anno_data = graph_title.split(": ")
+            try:
+                dict_data = round(team_dict[anno_team][sel_date.strftime('%d-%m-%Y')][anno_data])
+            except KeyError:
+                dict_data= round(sel[1][1])
+            sel.annotation.set_text(f"{sel.artist.get_label()}\n" \
+                                    f"{mdates.num2date(sel[1][0]).date()}: " \
+                                    f"{dict_data}")
             cursor.visible=True
         else:
             cursor.visible=False
@@ -200,7 +210,7 @@ def get_data_headers(engine = sa.create_engine("sqlite:///TicketData.db")):
         return columns
 
 def main():
-    teams = get_teams()[:3]
+    teams = ["CAB"]
     for team in teams:
         print(team)
     headers = get_data_headers()[1:3]
