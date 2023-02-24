@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as tk
 import sqlalchemy as sa
+import mplcursors as mpc
 
 def create_dictionary(table, teams, data_wanted, engine = sa.create_engine("sqlite:///TicketData.db")):
     if table == None or len(teams)==0 or len(data_wanted)==0:
@@ -78,34 +79,69 @@ def create_sql_list(data_name, list):
         sql_list.pop()
     return sql_list
 
-def display_graph(team_dict, teams, data):
+def display_graph(team_dict, teams, data_requested):
     # plot
-    fig, ax = plt.subplots(len(data))
+    fig, ax = plt.subplots(len(data_requested))
+    '''
+    create the arrays to use as coordinates to plot
+
+    structure of team_dict
+    team_dict = {'team': "Team Name"
+                    {'date': 2020-01-01
+                        {'data1': 5}
+                        {'data2': 7} 
+                    }
+                    {'date': 2020-01-08
+                        {'data1': 9}
+                        {'data2': 2} 
+                    }
+                }
+
+    for each team in the dictionary,
+        add the date to the x coordinates
+        then create an array for each data set for the y coordinates
+
+    from example above,
+    x= [date(01-01-2020), date(01-08-2020)]
+    data1 = [5, 9]
+    data2 = [7, 2]
+    '''
     loc = locals()
     current_team = ''
     most_info = 0
     for team in teams:
         x = [] #date
-        data = [] #number of lines to graph
-        for key, value in team_dict[(str)(team)].items():
-            day, month, year = key.split('-')
+        data = [] #names of line to graph
+
+        #grabs the date
+        for date_key, data_dict in team_dict[(str)(team)].items():
+            day, month, year = date_key.split('-')
             date = (dt.datetime((int)(year), (int)(month), (int)(day)).date())
             x.append(date)
-            if current_team != team: #whenever team changes, create/clear data variables
-                for k in value.keys():    
-                    var = (str)(k)
-                    loc[var]=[] #creates the key if it doesn't exist or clears it if it does
+
+            #whenever team changes, create/clear data variables
+            if current_team != team: 
+                for data_name in data_dict.keys():    
+                    data_name_str = (str)(data_name)
+                    #creates a local variable {data_name}[] if it doesn't exist or clears it if it does
+                    loc[data_name_str]=[] 
                 current_team=team
-            for k, v in value.items():
-                var = (str)(k)
-                loc[var].append(v)
-                if var not in data:
-                    data.append(var)
+            
+            #if the name of the dataset doesn't appear in the names of line to graph, add it in            
+            #add the data_value to the local variable {data_name}[]
+            for data_name, data_value in data_dict.items():
+                if data_name_str not in data:
+                    data.append(data_name_str)
+                data_name_str = (str)(data_name)
+                loc[data_name_str].append(data_value)
+
+
+        #create the plots
         if len(data) == 1:
             ax.plot(x, loc[data[0]], linewidth=2.0, label = f"{team}: {data[0]}")
             ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.TH, interval=2))
             ax.xaxis.set_minor_locator(tk.AutoMinorLocator(2))
-            ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))   
+            ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         else:
             for i in range(len(data)):
                 if len(loc[data[i]]) == len(x): 
@@ -120,8 +156,23 @@ def display_graph(team_dict, teams, data):
     fig.set_figwidth(most_info/2)
     fig.autofmt_xdate()
     fig.tight_layout(pad=.5, w_pad=0, h_pad=1)
+    cursor = mpc.cursor(hover=2)
+    @cursor.connect("add")
+    def on_add(sel):
+        sel_date = mdates.num2date(sel[1][0]).date() 
+        if(sel_date.weekday() == mdates.TH.weekday): 
+            graph_title=sel.artist.get_label()
+            anno_team, anno_data = graph_title.split(": ") 
+            sel.annotation.set_text(f"{sel.artist.get_label()}\n{mdates.num2date(sel[1][0]).date()}: {round(team_dict[anno_team][sel_date.strftime('%d-%m-%Y')][anno_data])}")
+            cursor.visible=True
+        else:
+            cursor.visible=False
+        
     #plt.show()
     return fig
+
+def hover(event):
+    print()
 
 def get_teams(engine = sa.create_engine("sqlite:///TicketData.db")):
     with engine.connect() as conn:
