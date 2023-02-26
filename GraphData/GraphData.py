@@ -164,25 +164,22 @@ def display_graph(team_dict, teams, data_requested):
     @cursor.connect("add")
     def on_add(sel):
         sel_date = mdates.num2date(sel[1][0]).date() 
-        if(sel_date.weekday() == mdates.TH.weekday): 
-            graph_title=sel.artist.get_label()
-            anno_team, anno_data = graph_title.split(": ")
-            try:
-                dict_data = round(team_dict[anno_team][sel_date.strftime('%d-%m-%Y')][anno_data])
-            except KeyError:
-                dict_data= round(sel[1][1])
-            sel.annotation.set_text(f"{sel.artist.get_label()}\n" \
-                                    f"{mdates.num2date(sel[1][0]).date()}: " \
-                                    f"{dict_data}")
-            cursor.visible=True
-        else:
-            cursor.visible=False
+        if(sel_date.weekday() != mdates.TH.weekday): 
+            sel_date = sel_date + dt.timedelta(days=(mdates.TH.weekday - sel_date.weekday()))
+        graph_title=sel.artist.get_label()
+        anno_team, anno_data = graph_title.split(": ")
+        try:
+            dict_data = round(team_dict[anno_team][sel_date.strftime('%d-%m-%Y')][anno_data])
+        except KeyError:
+            dict_data= round(sel[1][1])
+        sel.annotation.set_text(f"{sel.artist.get_label()}\n" \
+                                f"{sel_date}: " \
+                                f"{dict_data}")
+        cursor.visible=True
+
         
     #plt.show()
     return fig
-
-def hover(event):
-    print()
 
 def get_teams(engine = sa.create_engine("sqlite:///TicketData.db")):
     with engine.connect() as conn:
