@@ -5,8 +5,8 @@ import matplotlib.dates as mdates
 import matplotlib.ticker as tk
 import sqlalchemy as sa
 import mplcursors as mpc
-import numpy as np
 
+#region Data setup
 def create_dictionary(table, teams, data_wanted, engine = sa.create_engine("sqlite:///TicketData.db")):
     if table == None or len(teams)==0 or len(data_wanted)==0:
         return
@@ -79,6 +79,34 @@ def create_sql_list(data_name, list):
     else:
         sql_list.pop()
     return sql_list
+#endregion
+
+#region DB read (for validation)
+def get_teams(engine = sa.create_engine("sqlite:///TicketData.db")):
+    with engine.connect() as conn:
+        table_names = get_tables(engine = engine)
+        for table in table_names:
+            data = pd.read_sql(sa.text(f"Select distinct Team from {table}"), con=conn, index_col="Team")
+        return(data.index)
+
+def get_tables(engine = sa.create_engine("sqlite:///TicketData.db")):
+    with engine.connect() as conn:
+        inspector = sa.inspect(conn)
+        return inspector.get_table_names(engine=engine)
+
+def get_data_headers(engine = sa.create_engine("sqlite:///TicketData.db")):
+    with engine.connect() as conn:
+        inspector = sa.inspect(conn)
+        columns = []
+        for table in inspector.get_table_names():
+            column = inspector.get_columns(table)
+            for col in column:
+                col_name = col["name"]
+                if col_name not in ['index', 'Team', 'Date']:
+                    line = f'{col_name}'
+                    columns.append(line)
+        return columns
+#endregion
 
 def display_graph(team_dict, teams, data_requested):
     # plot
@@ -180,31 +208,6 @@ def display_graph(team_dict, teams, data_requested):
         
     #plt.show()
     return fig
-
-def get_teams(engine = sa.create_engine("sqlite:///TicketData.db")):
-    with engine.connect() as conn:
-        table_names = get_tables(engine = engine)
-        for table in table_names:
-            data = pd.read_sql(sa.text(f"Select distinct Team from {table}"), con=conn, index_col="Team")
-        return(data.index)
-
-def get_tables(engine = sa.create_engine("sqlite:///TicketData.db")):
-    with engine.connect() as conn:
-        inspector = sa.inspect(conn)
-        return inspector.get_table_names(engine=engine)
-
-def get_data_headers(engine = sa.create_engine("sqlite:///TicketData.db")):
-    with engine.connect() as conn:
-        inspector = sa.inspect(conn)
-        columns = []
-        for table in inspector.get_table_names():
-            column = inspector.get_columns(table)
-            for col in column:
-                col_name = col["name"]
-                if col_name not in ['index', 'Team', 'Date']:
-                    line = f'{col_name}'
-                    columns.append(line)
-        return columns
 
 def main():
     teams = ["CAB"]
