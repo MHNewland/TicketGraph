@@ -117,7 +117,13 @@ def tab_info(frame, data_name, team_name, graph):
     xdata=data_line.get_xdata()
     ydata=data_line.get_ydata()
 
-    for day in range(4,0,-1):
+    weeks_before = 4
+    # if the line doesn't have at least 4 weeks worth of data
+    # set the number of weeks to look for to the number of weeks it has data for.
+    if len(xdata) < weeks_before:
+        weeks_before = len(xdata)
+
+    for day in range(weeks_before,0,-1):
         if today - xdata[-day] < dt.timedelta(days=(7*day)):
             if week_avg ==0:
                 week_avg = np.average(ydata[-day:])
@@ -130,7 +136,8 @@ def tab_info(frame, data_name, team_name, graph):
         
     this_week_label = tk.Label(frame, text=f"This week:", font=label_font)
     this_week_label.grid(row=1, column=0,sticky='w')
-    this_week_num = tk.Label(frame, text=this_week, font=label_font)
+    #makes the background of this week's number lime green if it's less than last week, otherwise it makes it red.
+    this_week_num = tk.Label(frame, text=this_week, font=label_font, background=(lambda t, l: "lime green" if t<l else "red")(this_week, last_week))
     this_week_num.grid(row=1, column=1, sticky='w')
 
     last_week_label = tk.Label(frame, text=f"Last week:", font=label_font)
@@ -245,7 +252,6 @@ def get_master_window(frame):
     return master
 #endregion
 
-
 #region Main Window
 def create_window(w, h):
     window = tk.Tk()
@@ -255,14 +261,16 @@ def create_window(w, h):
     return window
 
 '''
+
 grid(row, column)
-_______________________________________________
-|(0,0) Selection Frame  |(0,1) Data Table Frame|
-------------------------|      rowspan=2       |
-|(1,0)   Button Frame   | weight=1 (to resize) |
------------------------------------------------|
-|(2,0)            Graph (columnspan=2)         |
-------------------------------------------------
+____________________________________________________________________
+|(0,0) Selection Frame |(0,1) Data Table Frame (weight=1 to resize)|
+|----------------------|-------------------------------------------|
+|(1,0)   Button Frame  |(1,1) Excel button (not implemented)       |
+|------------------------------------------------------------------|
+|(2,0)                 Graph (columnspan=2)                        |
+|__________________________________________________________________|
+
 '''
 def create_app(window):
     set_window_size(globals()["window_width"], globals()["window_height"],window)

@@ -7,18 +7,23 @@ import sqlalchemy as sa
 import mplcursors as mpc
 
 #region Data setup
+
+'''
+structure of team_dict
+
+team_dict = {'team':
+                {'date':
+                    {'data1': ''}
+                    {'data2': ''} 
+                }
+            }
+
+'''   
 def create_dictionary(table, teams, data_wanted, engine = sa.create_engine("sqlite:///TicketData.db")):
     if table == None or len(teams)==0 or len(data_wanted)==0:
         return
     param_list = ['Team', 'Date']
-    ''' structure of team_dict
-    team_dict = {'team':
-                    {'date':
-                        {'data1': ''}
-                        {'data2': ''} 
-                    }
-                }
-    '''        
+     
     #make sure all teams listed are valid
     valid_teams = (list)(get_teams(engine))
     validated_teams = validate_information(teams, valid_teams)
@@ -108,33 +113,35 @@ def get_data_headers(engine = sa.create_engine("sqlite:///TicketData.db")):
         return columns
 #endregion
 
+#region Graph
+'''
+create the arrays to use as coordinates to plot
+
+structure of team_dict
+team_dict = {'team': "Team Name"
+                {'date': 2020-01-01
+                    {'data1': 5}
+                    {'data2': 7} 
+                }
+                {'date': 2020-01-08
+                    {'data1': 9}
+                    {'data2': 2} 
+                }
+            }
+
+for each team in the dictionary,
+    add the date to the x coordinates
+    then create an array for each data set for the y coordinates
+
+from example above,
+x= [date(01-01-2020), date(01-08-2020)]
+data1 = [5, 9]
+data2 = [7, 2]
+
+'''
 def display_graph(team_dict, teams, data_requested):
     # plot
     fig, ax = plt.subplots(len(data_requested))
-    '''
-    create the arrays to use as coordinates to plot
-
-    structure of team_dict
-    team_dict = {'team': "Team Name"
-                    {'date': 2020-01-01
-                        {'data1': 5}
-                        {'data2': 7} 
-                    }
-                    {'date': 2020-01-08
-                        {'data1': 9}
-                        {'data2': 2} 
-                    }
-                }
-
-    for each team in the dictionary,
-        add the date to the x coordinates
-        then create an array for each data set for the y coordinates
-
-    from example above,
-    x= [date(01-01-2020), date(01-08-2020)]
-    data1 = [5, 9]
-    data2 = [7, 2]
-    '''
     loc = locals()
     current_team = ''
     most_info = 0
@@ -208,6 +215,8 @@ def display_graph(team_dict, teams, data_requested):
         
     #plt.show()
     return fig
+
+#endregion
 
 def main():
     teams = ["CAB"]
