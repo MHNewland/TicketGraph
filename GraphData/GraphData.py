@@ -30,7 +30,6 @@ def create_dictionary(table, teams, data_wanted, engine = sa.create_engine("sqli
 
     team_list = create_sql_list("Team", validated_teams)
 
-
     #make sure data is valid
     valid_data = (list)(get_data_headers(engine))
     validated_data = validate_information(data_wanted, valid_data)
