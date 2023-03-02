@@ -173,14 +173,14 @@ def display_graph(team_dict, teams, data_requested):
 
         #create the plots and graph for current team
         if len(data) == 1:
-            ax.plot(x, loc[data[0]], linewidth=5.0, label = f"{team}: {data[0]}")
+            ax.plot(x, loc[data[0]], linewidth=7.0, label = f"{team}: {data[0]}")
             ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.TH, interval=2))
             ax.xaxis.set_minor_locator(tk.AutoMinorLocator(2))
             ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         else:
             for i in range(len(data)):
                 if len(loc[data[i]]) == len(x): 
-                    ax[i].plot(x, loc[data[i]], linewidth=3.0, label = f"{team}: {data[i]}")
+                    ax[i].plot(x, loc[data[i]], linewidth=5.0, label = f"{team}: {data[i]}")
                     ax[i].xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.TH, interval=2))
                     ax[i].xaxis.set_minor_locator(tk.AutoMinorLocator(2))
                     ax[i].legend(loc='center left', bbox_to_anchor=(1, 0.5))

@@ -137,7 +137,7 @@ def tab_info(frame, data_name, team_name, graph):
     this_week_label = tk.Label(frame, text=f"This week:", font=label_font)
     this_week_label.grid(row=1, column=0,sticky='w')
     #makes the background of this week's number lime green if it's less than last week, otherwise it makes it red.
-    this_week_num = tk.Label(frame, text=this_week, font=label_font, background=(lambda t, l: "lime green" if t<l else "red")(this_week, last_week))
+    this_week_num = tk.Label(frame, text=this_week, font=label_font, background=(lambda t, l: "lime green" if t<l or t==0 else "red")(this_week, last_week))
     this_week_num.grid(row=1, column=1, sticky='w')
 
     last_week_label = tk.Label(frame, text=f"Last week:", font=label_font)
