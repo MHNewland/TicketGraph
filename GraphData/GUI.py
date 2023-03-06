@@ -3,6 +3,7 @@ from tkinter.ttk import Notebook, Treeview
 from ttkwidgets import CheckboxTreeview
 import datetime as dt
 import numpy as np
+import collections
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg)
 
@@ -108,20 +109,15 @@ def tab_info(frame, data_name, team_name, graph, team_dict):
     title_label = tk.Label(frame, text=f"{data_name}", font=header_font)  
     title_label.grid(row=0, column=0, columnspan=2, sticky='w')
     
-    data_line = None
+    data_line = get_line(graph, team_name, data_name)
+    if data_line !=None:
+        return
+    
     this_week = 0
     last_week = 0
     x_week_avg = 0
     weeks = 0
     roc = 0
-    for plot in graph.axes:
-        for line in plot.get_lines():
-            team, data = line.get_label().split(": ")
-            if team == team_name and data == data_name:
-                data_line=line
-                break
-    if data_line == None:
-        return
     
     grand_total = team_dict["Grand Total"]
     today=dt.date.today()
@@ -145,7 +141,10 @@ def tab_info(frame, data_name, team_name, graph, team_dict):
                 this_week = ydata[-day]
 
     if weeks != 0:
-        roc = ((np.divide(this_week, ydata[-weeks]))-1) * 100
+        if this_week == ydata[-weeks]:
+            roc = 0
+        else:
+            roc = ((np.divide(this_week, ydata[-weeks]))-1) * 100
         
     this_week_label = tk.Label(frame, text=f"This week:", font=label_font)
     this_week_label.grid(row=1, column=0,sticky='w')
@@ -170,7 +169,14 @@ def tab_info(frame, data_name, team_name, graph, team_dict):
 
     if (num_tickets:=data_name == "# of Tickets") or data_name == "Update Age >=30":
         if num_tickets:
-            pct_untouched = np.divide(team_dict[team_name][latest_date]["Update Age >=30"], this_week)*100
+            try:
+                this_week_untouched = team_dict[team_name][latest_date]["Update Age >=30"]
+            except KeyError:
+                this_week_untouched = 0
+            if this_week == 0 and this_week_untouched==0:
+                pct_untouched = 0
+            else:
+                pct_untouched = np.divide(this_week_untouched, this_week)*100
             pct_untouched_label = tk.Label(frame, text=f"% not touched in 30 days:", font=label_font)
             pct_untouched_label.grid(row=5, column=0, sticky='w')
             pct_untouched_num = tk.Label(frame, text=f"{round(pct_untouched,2)}%", font=label_font)
@@ -276,7 +282,7 @@ def graph_data(frame, team_dict, teams_checked, data_checked):
 def show_ranking(frame):
     master_window = get_master_window(frame)
     if find_widget(master_window, "Ranking_frame") == None:
-        set_window_size(master_window.winfo_width()+200, master_window.winfo_height(), master_window)
+        set_window_size(master_window.winfo_width()+500, master_window.winfo_height(), master_window)
         ranking_frame = tk.Frame(master_window, background="wheat", padx=5, pady=5)
         ranking_frame.widgetName = "Ranking_frame"
         ranking_frame.grid_rowconfigure(1, weight=1)
@@ -285,22 +291,53 @@ def show_ranking(frame):
         ranking_title = tk.Label(ranking_frame, text="Team ranking")
         ranking_title.grid(row=0, column=0, sticky='nw')
 
-        rank_box = Treeview(ranking_frame, width=75, columns=2, show="headings")
+        rank_box = Treeview(ranking_frame, columns=2, show="headings")
+        
+        rank_box['columns']=('Rank', 'Team', 'Score')
+        rank_box.column('#0', width=0)
+        rank_box.column('Rank', width=40, anchor='e')
+        rank_box.column('Team', width=200)
+        rank_box.column('Score', width=40)
+
+        rank_box.heading('#0', text='')
+        rank_box.heading('Rank', text='Rank')
+        rank_box.heading('Team', text='Team')
+        rank_box.heading('Score', text='Score')
         rank_box.grid(row=1, column=0, sticky='nsew')
 
+        team_dict = dbi.create_dictionary(dbi.get_tables()[0],dbi.get_teams(), dbi.get_data_headers())
+
         team_rank = {}
-        for team in find_widget(master_window, "Teams_treeview").get_children():
-            team_rank[team]=calculate_team_score(team)
+        for team in team_dict.keys():
+            team_rank[team]=calculate_team_score(team, team_dict[team], frame)
         
         team_rank = sorted(team_rank.items(), key=lambda x:x[1])
-        for team in team_rank:
-            rank_box.insert("",'end',team,)
 
-def calculate_team_score(team):
+        for index in range(len(team_rank)):
+            rank_box.insert("",'end', values=([index]+(list)(team_rank[index])))
+
+def calculate_team_score(team, team_dict, frame):
+    graph = find_widget(get_master_window(frame),"Graph")
+    num_tickets_line = get_line(graph, team, "# of Tickets")
+    
     return np.random.randint(0,100)
+
+
 #endregion
    
 #region App controls
+def get_line(graph, team_name, data_name):
+
+    data_line= None
+    for plot in graph.axes:
+        for line in plot.get_lines():
+            team, data = line.get_label().split(": ")
+            if team == team_name and data == data_name:
+                data_line=line
+                break
+    
+    return data_line
+
 def find_widget(frame, widget_name):
     try:
         for item in frame.winfo_children():

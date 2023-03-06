@@ -7,7 +7,7 @@ Due to being in the healthcare system, I am not able to show the raw Excel data 
 </br>
 
 ## Packages needed
-No pacages will be needed if ran from the "Ticket Graph.exe" file within the "Ticket Graph app" folder.
+No packages will be needed if ran from the "Ticket Graph.exe" file within the "Ticket Graph app" folder, only other file that's needed is a TicketData.db file with an actual database within it.
 
 Requirements to run the python files within the GraphData foler are listed in "requirements.txt".
 
@@ -65,6 +65,9 @@ numbers in a DataFrame, some might be written as “(502) 234-2434” and some m
 “502-234-2434”. Still, some might be “5022342434”. Obviously this presents challenges
 if you’re trying to compare them, so you might need RegEx to pull out the relevant info.
 That’s only an example though, and your mentors can explain further.*
+
+There are a few places where I've cleaned the data.
+In the file I used to create the database, I had to replace all instances of character – (En Dash, unicode: U+2013) with - (Hyphen Minus, unicode U+002D) so if the list was sent with regular text, it wouldn't break.
 
 </br>
 
