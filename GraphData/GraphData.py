@@ -34,75 +34,31 @@ data2 = [7, 2]
 def display_graph(team_dict, teams, data_requested):
     # plot
     fig, ax = plt.subplots(len(data_requested))
-    loc = locals()
-    current_team = ''
-    most_info = 0
-    for team in teams:
-        date_array = [] #date
-        data = [] #names of line to graph
 
-        #grabs the date
-        for date_key, data_dict in team_dict[(str)(team)].items():
-            day, month, year = date_key.split('-')
-            date = (dt.datetime((int)(year), (int)(month), (int)(day)).date())
-            date_array.append(date)
+    #if only 1 set of data is requested, can't access ax[i].plot, must use ax.plot
+    if len(data_requested)==1:
+        for team in teams:
+            date_array, data_array = dbi.process_dictionary(team_dict, team, data_requested[0])                    
+            ax.plot(date_array, data_array, linewidth=7.0, label = f"{team}: {data_requested[0]}")
 
-            #whenever team changes, create/clear data variables
-            if current_team != team: 
-                for data_name in data_dict.keys():
-                    if data_name in data_requested:   
-                        data_name_str = (str)(data_name)
-                        #creates a local variable {data_name}[] if it doesn't exist or clears it if it does
-                        loc[data_name_str]=[] 
-                current_team=team
-            
-            #if the name of the dataset doesn't appear in the names of line to graph, add it in            
-            #add the data_value to the local variable {data_name}[]
-            for data_name, data_value in data_dict.items():
-                if data_name in data_requested:
-                    if data_name not in data:
-                        data.append(data_name)
-                    data_name_str = (str)(data_name)
-                    loc[data_name_str].append(data_value)
+        ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.TH, interval=2))
+        ax.xaxis.set_minor_locator(tk.AutoMinorLocator(2))
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    else:
+        for i in range(len(data_requested)):
+            for team in teams:
+                date_array, data_array = dbi.process_dictionary(team_dict, team, data_requested[i])                    
+                ax[i].plot(date_array, data_array, linewidth=7.0, label = f"{team}: {data_requested[i]}")
 
-        today = dt.date.today()
-        num_weeks = (today - date_array[0]).days//7
+            ax[i].xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.TH, interval=2))
+            ax[i].xaxis.set_minor_locator(tk.AutoMinorLocator(2))
+            ax[i].legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
-        #if a date doesn't exist in the date array, set value to 0.
-        for index in range(num_weeks-1):
-            if index+1 < len(date_array):
-                if date_array[index+1] > (date_array[index]+dt.timedelta(weeks=2)):
-                    date_array.insert(index+1, (date_array[index]+dt.timedelta(weeks=1)))
-                    for i in range(len(data)):
-                        loc[data[i]].insert(index+1, 0)
-            elif date_array[index]+dt.timedelta(weeks=1)<today:
-                date_array.append(date_array[index]+dt.timedelta(weeks=1))
-                for i in range(len(data)):
-                    loc[data[i]].append(0)
-
-                    
-
-        #create the plots and graph for current team
-        if len(data) == 1:
-            ax.plot(date_array, loc[data[0]], linewidth=7.0, label = f"{team}: {data[0]}")
-            ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.TH, interval=2))
-            ax.xaxis.set_minor_locator(tk.AutoMinorLocator(2))
-            ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        else:
-            for i in range(len(data)):
-                if len(loc[data[i]]) == len(date_array): 
-                    ax[i].plot(date_array, loc[data[i]], linewidth=5.0, label = f"{team}: {data[i]}")
-                    ax[i].xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.TH, interval=2))
-                    ax[i].xaxis.set_minor_locator(tk.AutoMinorLocator(2))
-                    ax[i].legend(loc='center left', bbox_to_anchor=(1, 0.5))
-                else:
-                    print("data doesn't match")
-        #if a list doesn't have all the dates, find the one with the most dates
-        if len(date_array)> most_info:
-            most_info=len(date_array)
 
     #set the figure width to accommodate the 
-    fig.set_figwidth((most_info/6) + 10)
+    #weeks = (dt.date.today() - date_array[0]).days // 7
+    px = (1/plt.rcParams['figure.dpi'])
+    fig.set_size_inches(1350*px, 550*px)
     fig.autofmt_xdate()
     fig.tight_layout(pad=1, w_pad=0, h_pad=1)
     cursor = mpc.cursor(hover=2)

@@ -10,6 +10,13 @@ from matplotlib.backends.backend_tkagg import (
 import GraphData as gd
 import DBInfo as dbi
 
+#region default sizes
+DEFAULT_WINDOW_SIZE = "650x300"
+GRAPH_ONLY_SIZE = "1400x900"
+RANK_ONLY_SIZE = "950x300"
+RANK_AND_GRAPH_SIZE="1700x900"
+#endregion
+
 #region Selection Frame
 '''
 | team_box  | data_box  |
@@ -63,11 +70,12 @@ _________________________________
 |4 week avg.| #  |4 week avg.| # |
 '''
 def create_data_table(frame):
-    data_table_frame = tk.Frame(frame, background='purple', padx=5, pady=5)#, width=10)
-    data_table_frame.widgetName = "Data_table_frame"
+    data_table_frame = tk.Frame(frame, background='purple', padx=5, pady=5)
+
     data_table_frame.columnconfigure(0, weight=1)
     data_table_frame.rowconfigure(1, weight=1)
     data_table_frame.grid(row=0, column=1, sticky='nsew')
+    data_table_frame.widgetName = "Data_table_frame"
     data_table_frame.grid_propagate(False)
 
     data_nb_title = tk.Label(data_table_frame, text="Data Table")
@@ -110,7 +118,7 @@ def tab_info(frame, data_name, team_name, graph, team_dict):
     title_label.grid(row=0, column=0, columnspan=2, sticky='w')
     
     data_line = get_line(graph, team_name, data_name)
-    if data_line !=None:
+    if data_line == None:
         return
     
     this_week = 0
@@ -213,7 +221,7 @@ def create_unselect_button(frame):
     unselect_frame = tk.Frame(frame, background="aqua", height=30, padx=5, pady=5)
     unselect_frame.widgetName = "Unselect_frame"
     unselect_frame.grid(row=0, column=1, sticky='w')
-    unselect = tk.Button(unselect_frame, text="Unselect all", command=lambda: unselect_all(frame))
+    unselect = tk.Button(unselect_frame, text="Unselect all", command=lambda: unselect_all(get_master_window(frame)))
     unselect.grid(row=0, column=0)
 #endregion
 
@@ -221,7 +229,7 @@ def create_unselect_button(frame):
 
 def create_ranking_button_frame(frame):
     ranking_button_frame = tk.Frame(frame, background="fuchsia", padx=5, pady=5)
-    ranking_button_frame.widgetName = "Ranking_Button_frame"
+    ranking_button_frame.widgetName = "Ranking_button_frame"
     ranking_button_frame.grid(row=1, column=1, sticky='nsw')
     ranking_button_frame.grid_rowconfigure(0, weight=1)
     ranking_button_frame.grid_columnconfigure(0, weight=1)
@@ -229,27 +237,23 @@ def create_ranking_button_frame(frame):
 
 def create_ranking_button(frame):
     ranking_button = tk.Button(frame, text="Show Ranking", command=lambda: show_ranking(frame))
+    ranking_button.widgetName="Show_ranking_button"
     ranking_button.grid()
+
+def create_hide_ranking_button(frame):
+    hide_ranking_button = tk.Button(frame, text="Hide Ranking", command=lambda: hide_ranking(frame))
+    hide_ranking_button.widgetName="Hide_ranking_button"
+    hide_ranking_button.grid()
+    return hide_ranking_button
 #endregion
 
 #region Button Commands
-def unselect_all(selection_frame):
-    master_window = get_master_window(selection_frame)
-    try:
-        for frame in master_window.winfo_children():
-            frame.destroy()
-        master_window.withdraw()
-        create_app(master_window)
-    except Exception as err:
-        print(err) 
-
-#Graph
 def get_data(frame):
     #CheckboxTreeview.get_checked() returns a list of all checked items in that checkbox
-    selection_frame = find_widget(get_master_window(frame), "Selection_frame")
+    selection_frame = find_widget(master:=get_master_window(frame), "Selection_frame")
     if selection_frame != None:
-        teams_checked = find_widget(get_master_window(frame), "Teams_treeview").get_checked()
-        data_checked = find_widget(get_master_window(frame), "Data_treeview").get_checked()
+        teams_checked = find_widget(master, "Teams_treeview").get_checked()
+        data_checked = find_widget(master, "Data_treeview").get_checked()
         if len(teams_checked)==0 or len(data_checked)==0:
             return
         
@@ -267,22 +271,45 @@ def get_data(frame):
         fill_data_table(get_master_window(frame), teams_checked, data_checked, graph, team_dict)
 
 def graph_data(frame, team_dict, teams_checked, data_checked):
-    graph_frame = tk.Frame(get_master_window(frame), background="black", padx=5, pady=5)
-    graph_frame.grid(row=2, column=0, columnspan=2, sticky='new')
-    graph_frame.columnconfigure(0, weight=1)
+    if (graph_frame:= find_widget(\
+            (master:=get_master_window(frame)),\
+            "Graph_frame"))!=None:
 
+        graph_frame.grid()
+    else:
+        graph_frame = tk.Frame(master, background="black", padx=5, pady=5)
+        graph_frame.grid(row=2, column=0, columnspan=2, sticky='new')
+        graph_frame.columnconfigure(0, weight=1)
+        graph_frame.widgetName = "Graph_frame"
+    if (graph:=find_widget(graph_frame, "Graph")) !=None:
+        graph.destroy()
     graph = gd.display_graph(team_dict, teams_checked, data_checked)
     canvas = FigureCanvasTkAgg(graph, graph_frame)
     canvas.draw()
     canvas.get_tk_widget().widgetName = "Graph"
     canvas.get_tk_widget().grid(sticky='nsew')
-    set_window_size(canvas.get_width_height()[0]+50, canvas.get_width_height()[1]+globals()['window_height']+10,frame)
+    set_window_size((lambda x: GRAPH_ONLY_SIZE if x==None else RANK_AND_GRAPH_SIZE)(find_widget(get_master_window(frame), "Ranking_frame")), frame)
     return graph
 
 def show_ranking(frame):
     master_window = get_master_window(frame)
-    if find_widget(master_window, "Ranking_frame") == None:
-        set_window_size(master_window.winfo_width()+500, master_window.winfo_height(), master_window)
+    swap_ranking_buttons(master_window)
+
+    window_size = DEFAULT_WINDOW_SIZE
+    graph = find_widget(master_window, "Graph_frame")
+    if graph == None:
+        window_size = RANK_ONLY_SIZE
+    else:
+        if not graph.winfo_ismapped():
+            window_size = RANK_ONLY_SIZE
+        else:
+            window_size = RANK_AND_GRAPH_SIZE
+
+    set_window_size(window_size, master_window)
+
+    if (rank_frame:=find_widget(master_window, "Ranking_frame")) != None:
+        rank_frame.grid()
+    else:
         ranking_frame = tk.Frame(master_window, background="wheat", padx=5, pady=5)
         ranking_frame.widgetName = "Ranking_frame"
         ranking_frame.grid_rowconfigure(1, weight=1)
@@ -305,23 +332,125 @@ def show_ranking(frame):
         rank_box.heading('Score', text='Score')
         rank_box.grid(row=1, column=0, sticky='nsew')
 
-        team_dict = dbi.create_dictionary(dbi.get_tables()[0],dbi.get_teams(), dbi.get_data_headers())
+        
+        sb=tk.Scrollbar(ranking_frame, orient='vertical')
+        rank_box.config(yscrollcommand=sb.set)
+        sb.config(command = rank_box.yview, width=15)
+        sb.grid(row=0, column=1, rowspan=3, sticky='ns')
 
-        team_rank = {}
-        for team in team_dict.keys():
-            team_rank[team]=calculate_team_score(team, team_dict[team], frame)
+        data = ["# of Tickets", "Update Age >=30"]
+        team_dict = dbi.create_dictionary(dbi.get_tables()[0],dbi.get_teams(), data)
+
+        team_rank = calculate_team_score(team_dict)
         
         team_rank = sorted(team_rank.items(), key=lambda x:x[1])
 
         for index in range(len(team_rank)):
-            rank_box.insert("",'end', values=([index]+(list)(team_rank[index])))
+            rank_box.insert("",'end', values=([index+1]+(list)(team_rank[index])))
 
-def calculate_team_score(team, team_dict, frame):
-    graph = find_widget(get_master_window(frame),"Graph")
-    num_tickets_line = get_line(graph, team, "# of Tickets")
+def calculate_team_score(team_dict):
+    team_data = {}
+    team_score = {}
+    num_tickets = "# of Tickets"
+    untouched = "Update Age >=30"
+    #calculate Grand Total first
+    team_data["Grand Total"] = {}
+    team_data["Grand Total"][num_tickets] = dbi.process_dictionary(team_dict, "Grand Total", num_tickets)[1]
+
+    for team in team_dict.keys():
+        if team != "Grand Total":
+            team_data[team] = {}        
+            team_data[team][num_tickets] = dbi.process_dictionary(team_dict, team, num_tickets)[1]
+            team_data[team][untouched] = dbi.process_dictionary(team_dict, team, untouched)[1]
+            # % of Grand Total last 4 weeks
+            avg_pct_total_arr =[ \
+                np.divide(t,GT)*100  \
+                for t, GT in zip(team_data[team][num_tickets][-4:], team_data["Grand Total"][num_tickets][-4:])]
+            
+            # Avg % of Grand Total
+            avg_pct_total = np.nanmean(avg_pct_total_arr)
+            
+            # Calculate % of Grand Total this week
+            # subtract avg_pct_total to get deviation (neg is good)
+            # add in % untouched
+            # round to 3 decimal places
+            team_score[team] = round(   (np.divide(team_data[team][num_tickets][-1], \
+                                         team_data["Grand Total"][num_tickets][-1])*100) \
+                                      -  avg_pct_total \
+                                      + (np.divide(team_data[team][untouched][-1], \
+                                         team_data["Grand Total"][num_tickets][-1])*100), \
+                               3)
+
+
+    return team_score
+
+def unselect_all(selection_frame):
+    if (team_selection := find_widget(selection_frame, "Teams_treeview")) != None:
+        team_selection.uncheck_all()
+    if (data_selection := find_widget(selection_frame, "Data_treeview")) != None:
+        data_selection.uncheck_all()
+    keep_frames = ["Selection_frame", "Button_frame", "Data_table_frame", "Ranking_button_frame"]
+    for child in get_master_window(selection_frame).winfo_children():
+        if type(child)==tk.Frame:
+            if child.widgetName not in keep_frames:
+                child.grid_remove()
+            else:
+                if child.widgetName == "Data_table_frame":
+                    data_nb = find_widget(child, "Data_notebook")
+                    if data_nb.tabs() != None:
+                        for tab in data_nb.tabs():
+                            data_nb.forget(tab)  
+                if child.widgetName ==  "Ranking_button_frame":
+                    for button in child.winfo_children():
+                        if type(button) == tk.Button:
+                            button.grid_remove()
+    swap_ranking_buttons(selection_frame)                
+    set_window_size(DEFAULT_WINDOW_SIZE, selection_frame)
+
     
-    return np.random.randint(0,100)
 
+def hide_ranking(frame):
+    rank_button_frame = find_widget(master_window:=get_master_window(frame), "Ranking_frame")
+    rank_button_frame.grid_remove()
+    swap_ranking_buttons(frame)
+    
+    window_size = DEFAULT_WINDOW_SIZE
+    graph = find_widget(master_window, "Graph_frame")
+    if graph != None:
+        if graph.winfo_ismapped():
+            window_size = GRAPH_ONLY_SIZE
+    
+    set_window_size(window_size, master_window)
+
+def swap_ranking_buttons(frame):
+    rank_frame = find_widget((master_window := get_master_window(frame)), "Ranking_frame")
+    rank_button_frame = find_widget(master_window, "Ranking_button_frame")
+    show_rank_button = find_widget(rank_button_frame, "Show_ranking_button")
+    hide_rank_button = find_widget(rank_button_frame, "Hide_ranking_button")
+    if hide_rank_button == None:
+        hide_rank_button = create_hide_ranking_button(rank_button_frame)
+
+    #if the show button is mapped, hide it and show the hide button
+    if show_rank_button.winfo_ismapped():
+        show_rank_button.grid_remove()
+        hide_rank_button.grid()            
+    #if the show button isn't mapped, check if hide button is
+    elif hide_rank_button.winfo_ismapped():
+        hide_rank_button.grid_remove()
+        show_rank_button.grid()
+    #if neither are mapped, check if rank_button_frame is mapped
+    #and add button accordingly
+    else:
+        hide_rank_button.grid_remove()
+        show_rank_button.grid_remove()
+
+        if rank_frame != None:
+            if rank_frame.winfo_ismapped():
+                hide_rank_button.grid()
+            else:
+                show_rank_button.grid()
+        else:
+            show_rank_button.grid()
 
 #endregion
    
@@ -352,12 +481,9 @@ def find_widget(frame, widget_name):
         print(err)
     return None
 
-def delete_widget(widget):
-    widget.destroy()
-
-def set_window_size(w, h, frame):
+def set_window_size(size, frame):
     master= get_master_window(frame)
-    master.geometry(f"{w}x{h}")
+    master.geometry(size)
 
 def get_master_window(frame):
     try:
@@ -371,11 +497,11 @@ def get_master_window(frame):
 #endregion
 
 #region Main Window
-def create_window(w, h):
+def create_window():
     window = tk.Tk()
     window.title("Ticket data")
     window.resizable(False,False)
-    window.geometry(f"{w}x{h}") 
+    window.geometry(DEFAULT_WINDOW_SIZE) 
     return window
 
 '''
@@ -391,7 +517,7 @@ ________________________________________________________________________________
 
 '''
 def create_app(window):
-    set_window_size(globals()["window_width"], globals()["window_height"],window)
+    set_window_size(DEFAULT_WINDOW_SIZE,window)
     window.config(background='yellow', padx=5, pady=5)
 
     window.grid_columnconfigure(1, weight=1)
@@ -411,9 +537,7 @@ def quit_me(window):
 #endregion
 
 def main():
-    globals()['window_width'] = 650
-    globals()['window_height'] = 300
-    window = create_window(globals()['window_width'], globals()['window_height'])
+    window = create_window()
     window.protocol("WM_DELETE_WINDOW", lambda:quit_me(window))
     create_app(window)
     

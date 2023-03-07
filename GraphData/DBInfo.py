@@ -1,5 +1,6 @@
 import sqlalchemy as sa
 import pandas as pd
+import datetime as dt
 
 #region Data setup
 
@@ -106,3 +107,57 @@ def get_data_headers(engine = sa.create_engine("sqlite:///TicketData.db")):
                     columns.append(line)
         return columns
 #endregion
+
+def process_dictionary(team_dict, team, data_requested):
+    date_array = [] 
+    data_array = []
+
+    #grabs the date
+    for date_key, data_dict in team_dict[(str)(team)].items():
+        day, month, year = date_key.split('-')
+        date = (dt.datetime((int)(year), (int)(month), (int)(day)).date())
+        date_array.append(date)
+        data_array.append(data_dict[data_requested])
+
+    today = dt.date.today()
+    num_weeks = (today - date_array[0]).days//7
+
+    missing_reports=[
+        dt.date(2022, 6,  23),
+        dt.date(2022, 9,  1 ),
+        dt.date(2022, 10, 27),
+        dt.date(2022, 11, 24),
+        dt.date(2022, 12, 8 ),
+        dt.date(2022, 12, 22),
+        dt.date(2022, 12, 29),
+        dt.date(2023, 1,  5 ), 
+        dt.date(2023, 1,  19)
+    ]
+
+    # if date_array starts after a missing report,
+    # subtract how many reports it starts after.
+    missing_weeks=len(missing_reports)
+    for i in range(missing_weeks):
+        if date_array[0] < missing_reports[i]:
+            missing_weeks-=i
+            break
+    #if a date doesn't exist in the date array, set value to 0.
+    for index in range(num_weeks-missing_weeks+1):
+        #while the next week is in the missing_reports array, add 1 to the weeks to skip
+        weeks = 1
+        while date_array[index]+dt.timedelta(weeks=weeks) in missing_reports:
+            weeks+=1 
+
+        if index+1 < len(date_array):
+            if   date_array[index+1] > (date_array[index]+dt.timedelta(days=10)) \
+            and (date_array[index]+dt.timedelta(weeks=weeks)) not in date_array:
+                    
+                    date_array.insert(index+1, (date_array[index]+dt.timedelta(weeks=weeks)))
+                    data_array.insert(index+1, 0)
+
+        elif date_array[-1]+dt.timedelta(weeks=weeks)<today:
+            date_array.append(date_array[-1]+dt.timedelta(weeks=weeks))
+            data_array.append(0)
+
+    return (date_array, data_array)
+
