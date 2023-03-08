@@ -12,9 +12,9 @@ import DBInfo as dbi
 
 #region default sizes
 DEFAULT_WINDOW_SIZE = "650x300"
-GRAPH_ONLY_SIZE = "1400x900"
+GRAPH_ONLY_SIZE = "1400x875"
 RANK_ONLY_SIZE = "950x300"
-RANK_AND_GRAPH_SIZE="1700x900"
+RANK_AND_GRAPH_SIZE="1700x875"
 #endregion
 
 #region Selection Frame
@@ -22,7 +22,7 @@ RANK_AND_GRAPH_SIZE="1700x900"
 | team_box  | data_box  |
 '''
 def create_selection_frame(window):
-    selection_frame = tk.Frame(window, background="red", padx=5, pady=5)
+    selection_frame = tk.Frame(window, background="light gray", padx=5, pady=5)
     selection_frame.grid(row=0, column=0, sticky='nsw')
     selection_frame.columnconfigure(0, weight=1)
     selection_frame.columnconfigure(1, weight=1)
@@ -32,14 +32,14 @@ def create_selection_frame(window):
 
 def create_team_box(frame):
     teams = sorted((list)(dbi.get_teams()))
-    team_frame = tk.Frame(frame,background='teal', padx=5, pady=5)
+    team_frame = tk.Frame(frame,background='light gray', padx=5, pady=5)
     team_frame.widgetName = "Team_frame"
     team_frame.grid(row=0, column=0, sticky='w')    
     create_box(team_frame, teams, "Teams")
 
 def create_data_box(frame):
     data = sorted((list)(dbi.get_data_headers()))
-    data_frame = tk.Frame(frame,background='lime', padx=5, pady=5)
+    data_frame = tk.Frame(frame,background='light gray', padx=5, pady=5)
     data_frame.widgetName = "Data_frame"
     data_frame.grid(row=0, column=1, sticky='w')
     create_box(data_frame, data, "Data")
@@ -70,7 +70,7 @@ _________________________________
 |4 week avg.| #  |4 week avg.| # |
 '''
 def create_data_table(frame):
-    data_table_frame = tk.Frame(frame, background='purple', padx=5, pady=5)
+    data_table_frame = tk.Frame(frame, background='light gray', padx=5, pady=5)
 
     data_table_frame.columnconfigure(0, weight=1)
     data_table_frame.rowconfigure(1, weight=1)
@@ -97,7 +97,7 @@ def fill_data_table(frame, teams, data_checked, graph, team_dict):
     if "Grand Total" in teams:
         teams.append(teams.pop(teams.index("Grand Total")))
     for t in range(len(teams)):
-        team_frames.append(tk.Frame(data_nb,background="pink", padx=5, pady=5))
+        team_frames.append(tk.Frame(data_nb,background="light gray", padx=5, pady=5))
         team_frames[t].rowconfigure(0, weight=1)
         data_nb.add(team_frames[t], text=f"{teams[t]}")
         for d in range(len(data_checked)):
@@ -105,16 +105,16 @@ def fill_data_table(frame, teams, data_checked, graph, team_dict):
             create_tab_data_frame(team_frames[t], data_checked[d], d, teams[t], graph, team_dict)
 
 def create_tab_data_frame(frame, data_name, data_col, team_name, graph, team_dict):
-    tab_data_frame = tk.Frame(frame,background="lavender", padx=5, pady=5, highlightbackground="black", highlightthickness=2)
+    tab_data_frame = tk.Frame(frame,background="light gray", padx=5, pady=5, highlightbackground="black", highlightthickness=2)
     for row in range(10):
         tab_data_frame.rowconfigure(row, weight=1)
     tab_data_frame.grid(row=0, column = data_col, sticky='nsew')
     tab_info(tab_data_frame, data_name, team_name, graph, team_dict)
 
 def tab_info(frame, data_name, team_name, graph, team_dict):
-    header_font = ("Arial Black", 19-len(graph.axes))
+    header_font = ("Arial light gray", 19-len(graph.axes))
     label_font = ("Arial", 15-len(graph.axes))
-    title_label = tk.Label(frame, text=f"{data_name}", font=header_font)  
+    title_label = tk.Label(frame, text=f"{data_name}", font=header_font, background="light gray")  
     title_label.grid(row=0, column=0, columnspan=2, sticky='w')
     
     data_line = get_line(graph, team_name, data_name)
@@ -154,25 +154,25 @@ def tab_info(frame, data_name, team_name, graph, team_dict):
         else:
             roc = ((np.divide(this_week, ydata[-weeks]))-1) * 100
         
-    this_week_label = tk.Label(frame, text=f"This week:", font=label_font)
+    this_week_label = tk.Label(frame, text=f"This week:", font=label_font, background="light gray")
     this_week_label.grid(row=1, column=0,sticky='w')
     #makes the background of this week's number lime green if it's less than last week, otherwise it makes it red.
     this_week_num = tk.Label(frame, text=f"{round(this_week, 2)}", font=label_font, background=(lambda t, l: "lime green" if t<l or t==0 else "red")(this_week, last_week))
     this_week_num.grid(row=1, column=1, sticky='w')
 
-    last_week_label = tk.Label(frame, text=f"Last week:", font=label_font)
+    last_week_label = tk.Label(frame, text=f"Last week:", font=label_font, background="light gray")
     last_week_label.grid(row=2, column=0,sticky='w')
-    last_week_num = tk.Label(frame, text=f"{round(last_week,2)}", font=label_font)
+    last_week_num = tk.Label(frame, text=f"{round(last_week,2)}", font=label_font, background="light gray")
     last_week_num.grid(row=2, column=1, sticky='w')
 
-    x_week_avg_label = tk.Label(frame, text=f"{weeks} week avg.:", font=label_font)
+    x_week_avg_label = tk.Label(frame, text=f"{weeks} week avg.:", font=label_font, background="light gray")
     x_week_avg_label.grid(row=3, column=0, sticky='w')
-    x_week_avg_num = tk.Label(frame, text=f"{round(x_week_avg, 2)}", font=label_font)
+    x_week_avg_num = tk.Label(frame, text=f"{round(x_week_avg, 2)}", font=label_font, background="light gray")
     x_week_avg_num.grid(row=3, column=1, sticky='w')
 
-    roc_label = tk.Label(frame, text=f"{weeks} week rate of change:", font=label_font)
+    roc_label = tk.Label(frame, text=f"{weeks} week rate of change:", font=label_font, background="light gray")
     roc_label.grid(row=4, column=0, sticky='w')
-    roc_num = tk.Label(frame, text=f"{round(roc,2)}%", font=label_font)
+    roc_num = tk.Label(frame, text=f"{round(roc,2)}%", font=label_font, background="light gray")
     roc_num.grid(row=4, column=1, sticky='w')
 
     if (num_tickets:=data_name == "# of Tickets") or data_name == "Update Age >=30":
@@ -185,15 +185,15 @@ def tab_info(frame, data_name, team_name, graph, team_dict):
                 pct_untouched = 0
             else:
                 pct_untouched = np.divide(this_week_untouched, this_week)*100
-            pct_untouched_label = tk.Label(frame, text=f"% not touched in 30 days:", font=label_font)
+            pct_untouched_label = tk.Label(frame, text=f"% not touched in 30 days:", font=label_font, background="light gray")
             pct_untouched_label.grid(row=5, column=0, sticky='w')
-            pct_untouched_num = tk.Label(frame, text=f"{round(pct_untouched,2)}%", font=label_font)
+            pct_untouched_num = tk.Label(frame, text=f"{round(pct_untouched,2)}%", font=label_font, background="light gray")
             pct_untouched_num.grid(row=5, column=1, sticky='w')        
         if team_name != "Grand Total":
             pct_total = np.divide(this_week, grand_total[latest_date][data_name])*100
-            pct_total_label = tk.Label(frame, text=f"% of Total:", font=label_font)
+            pct_total_label = tk.Label(frame, text=f"% of Total:", font=label_font, background="light gray")
             pct_total_label.grid(row=6, column=0, sticky='w')
-            pct_total_num = tk.Label(frame, text=f"{round(pct_total,2)}%", font=label_font)
+            pct_total_num = tk.Label(frame, text=f"{round(pct_total,2)}%", font=label_font, background="light gray")
             pct_total_num.grid(row=6, column=1, sticky='w')
 
 #endregion
@@ -203,7 +203,7 @@ def tab_info(frame, data_name, team_name, graph, team_dict):
 | submit_button | unselect_button   |
 '''
 def create_selection_button_frame(frame):
-    button_frame = tk.Frame(frame, background="blue", padx=5, pady=5)
+    button_frame = tk.Frame(frame, background="light gray", padx=5, pady=5)
     button_frame.widgetName = "Button_frame"
     button_frame.grid(row=1, column=0, sticky='nsw')
 
@@ -211,14 +211,14 @@ def create_selection_button_frame(frame):
     create_unselect_button(button_frame)
 
 def create_submit_button(frame):
-    submit_frame = tk.Frame(frame, background="green", height=30, padx=5, pady=5)
+    submit_frame = tk.Frame(frame, background="light gray", height=30, padx=5, pady=5)
     submit_frame.widgetName = "Submit_frame"
     submit_frame.grid(row=0, column=0, sticky='w')
     submit = tk.Button(submit_frame, text="Submit", command=lambda: get_data(frame))
     submit.grid(row=0, column=0)
 
 def create_unselect_button(frame):
-    unselect_frame = tk.Frame(frame, background="aqua", height=30, padx=5, pady=5)
+    unselect_frame = tk.Frame(frame, background="light gray", height=30, padx=5, pady=5)
     unselect_frame.widgetName = "Unselect_frame"
     unselect_frame.grid(row=0, column=1, sticky='w')
     unselect = tk.Button(unselect_frame, text="Unselect all", command=lambda: unselect_all(get_master_window(frame)))
@@ -228,7 +228,7 @@ def create_unselect_button(frame):
 #region Ranking Button Frame
 
 def create_ranking_button_frame(frame):
-    ranking_button_frame = tk.Frame(frame, background="fuchsia", padx=5, pady=5)
+    ranking_button_frame = tk.Frame(frame, background="light gray", padx=5, pady=5)
     ranking_button_frame.widgetName = "Ranking_button_frame"
     ranking_button_frame.grid(row=1, column=1, sticky='nsw')
     ranking_button_frame.grid_rowconfigure(0, weight=1)
@@ -243,7 +243,7 @@ def create_ranking_button(frame):
 def create_hide_ranking_button(frame):
     hide_ranking_button = tk.Button(frame, text="Hide Ranking", command=lambda: hide_ranking(frame))
     hide_ranking_button.widgetName="Hide_ranking_button"
-    hide_ranking_button.grid()
+    hide_ranking_button.grid(row=0, column=0)
     return hide_ranking_button
 #endregion
 
@@ -277,7 +277,7 @@ def graph_data(frame, team_dict, teams_checked, data_checked):
 
         graph_frame.grid()
     else:
-        graph_frame = tk.Frame(master, background="black", padx=5, pady=5)
+        graph_frame = tk.Frame(master, background="#d2323c", padx=5, pady=5)
         graph_frame.grid(row=2, column=0, columnspan=2, sticky='new')
         graph_frame.columnconfigure(0, weight=1)
         graph_frame.widgetName = "Graph_frame"
@@ -310,7 +310,7 @@ def show_ranking(frame):
     if (rank_frame:=find_widget(master_window, "Ranking_frame")) != None:
         rank_frame.grid()
     else:
-        ranking_frame = tk.Frame(master_window, background="wheat", padx=5, pady=5)
+        ranking_frame = tk.Frame(master_window, background="light gray", padx=5, pady=5)
         ranking_frame.widgetName = "Ranking_frame"
         ranking_frame.grid_rowconfigure(1, weight=1)
         ranking_frame.grid(row = 0, column=2, rowspan=3, sticky='nsew')
@@ -518,7 +518,7 @@ ________________________________________________________________________________
 '''
 def create_app(window):
     set_window_size(DEFAULT_WINDOW_SIZE,window)
-    window.config(background='yellow', padx=5, pady=5)
+    window.config(background='light gray', padx=5, pady=5)
 
     window.grid_columnconfigure(1, weight=1)
     window.grid_columnconfigure(1, minsize=100)
