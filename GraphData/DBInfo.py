@@ -142,7 +142,7 @@ def process_dictionary(team_dict, team, data_requested):
             missing_weeks-=i
             break
     #if a date doesn't exist in the date array, set value to 0.
-    for index in range(num_weeks-missing_weeks+1):
+    for index in range(num_weeks-missing_weeks):
         #while the next week is in the missing_reports array, add 1 to the weeks to skip
         weeks = 1
         while date_array[index]+dt.timedelta(weeks=weeks) in missing_reports:
@@ -155,9 +155,10 @@ def process_dictionary(team_dict, team, data_requested):
                     date_array.insert(index+1, (date_array[index]+dt.timedelta(weeks=weeks)))
                     data_array.insert(index+1, 0)
 
-        elif date_array[-1]+dt.timedelta(weeks=weeks)<today:
-            date_array.append(date_array[-1]+dt.timedelta(weeks=weeks))
-            data_array.append(0)
+        else:
+            while date_array[-1]+dt.timedelta(weeks=1)<=today:
+                date_array.append(date_array[-1]+dt.timedelta(weeks=weeks))
+                data_array.append(0)
 
     return (date_array, data_array)
 
