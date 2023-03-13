@@ -3,7 +3,6 @@ from tkinter.ttk import Notebook, Treeview
 from ttkwidgets import CheckboxTreeview
 import datetime as dt
 import numpy as np
-import collections
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg)
 
@@ -58,6 +57,33 @@ def create_box(frame, items, label):
     sb.grid(row=0, column=1,sticky='ns')
 #endregion
     
+#region Selection Button Frame
+'''
+| submit_button | unselect_button   |
+'''
+def create_selection_button_frame(frame):
+    button_frame = tk.Frame(frame, background="light gray", padx=5, pady=5)
+    button_frame.widgetName = "Button_frame"
+    button_frame.grid(row=1, column=0, sticky='nsw')
+
+    create_submit_button(button_frame)
+    create_unselect_button(button_frame)
+
+def create_submit_button(frame):
+    submit_frame = tk.Frame(frame, background="light gray", height=30, padx=5, pady=5)
+    submit_frame.widgetName = "Submit_frame"
+    submit_frame.grid(row=0, column=0, sticky='w')
+    submit = tk.Button(submit_frame, text="Submit", command=lambda: get_data(frame))
+    submit.grid(row=0, column=0)
+
+def create_unselect_button(frame):
+    unselect_frame = tk.Frame(frame, background="light gray", height=30, padx=5, pady=5)
+    unselect_frame.widgetName = "Unselect_frame"
+    unselect_frame.grid(row=0, column=1, sticky='w')
+    unselect = tk.Button(unselect_frame, text="Unselect all", command=lambda: unselect_all(get_master_window(frame)))
+    unselect.grid(row=0, column=0)
+#endregion
+
 #region Data Table
 '''
 Data_table_frame
@@ -198,31 +224,47 @@ def tab_info(frame, data_name, team_name, graph, team_dict):
 
 #endregion
 
-#region Selection Button Frame
-'''
-| submit_button | unselect_button   |
-'''
-def create_selection_button_frame(frame):
-    button_frame = tk.Frame(frame, background="light gray", padx=5, pady=5)
-    button_frame.widgetName = "Button_frame"
-    button_frame.grid(row=1, column=0, sticky='nsw')
+#region Ranking Frame
+def create_ranking_frame(master_window):
+    ranking_frame = tk.Frame(master_window, background="light gray", padx=5, pady=5)
+    ranking_frame.widgetName = "Ranking_frame"
+    ranking_frame.grid_rowconfigure(1, weight=1)
+    ranking_frame.grid(row = 0, column=2, rowspan=3, sticky='nsew')
 
-    create_submit_button(button_frame)
-    create_unselect_button(button_frame)
+    ranking_title = tk.Label(ranking_frame, text="Team ranking")
+    ranking_title.grid(row=0, column=0, sticky='nw')
 
-def create_submit_button(frame):
-    submit_frame = tk.Frame(frame, background="light gray", height=30, padx=5, pady=5)
-    submit_frame.widgetName = "Submit_frame"
-    submit_frame.grid(row=0, column=0, sticky='w')
-    submit = tk.Button(submit_frame, text="Submit", command=lambda: get_data(frame))
-    submit.grid(row=0, column=0)
+    fill_rank_data(ranking_frame)
 
-def create_unselect_button(frame):
-    unselect_frame = tk.Frame(frame, background="light gray", height=30, padx=5, pady=5)
-    unselect_frame.widgetName = "Unselect_frame"
-    unselect_frame.grid(row=0, column=1, sticky='w')
-    unselect = tk.Button(unselect_frame, text="Unselect all", command=lambda: unselect_all(get_master_window(frame)))
-    unselect.grid(row=0, column=0)
+def fill_rank_data(frame):
+    rank_box = Treeview(frame, columns=2, show="headings")
+    
+    rank_box['columns']=('Rank', 'Team', 'Score')
+    rank_box.column('#0', width=0)
+    rank_box.column('Rank', width=40, anchor='e')
+    rank_box.column('Team', width=200)
+    rank_box.column('Score', width=40)
+
+    rank_box.heading('#0', text='')
+    rank_box.heading('Rank', text='Rank')
+    rank_box.heading('Team', text='Team')
+    rank_box.heading('Score', text='Score')
+    rank_box.grid(row=1, column=0, sticky='nsew')
+
+    
+    sb=tk.Scrollbar(frame, orient='vertical')
+    rank_box.config(yscrollcommand=sb.set)
+    sb.config(command = rank_box.yview, width=15)
+    sb.grid(row=0, column=1, rowspan=3, sticky='ns')     
+    data = ["# of Tickets", "Update Age >=30"]
+    team_dict = dbi.create_dictionary(dbi.get_tables()[0],dbi.get_teams(), data)
+
+    team_rank = calculate_team_score(team_dict)
+    
+    team_rank = sorted(team_rank.items(), key=lambda x:x[1])
+
+    for index in range(len(team_rank)):
+        rank_box.insert("",'end', values=([index+1]+(list)(team_rank[index])))
 #endregion
 
 #region Ranking Button Frame
@@ -288,101 +330,8 @@ def graph_data(frame, team_dict, teams_checked, data_checked):
     canvas.draw()
     canvas.get_tk_widget().widgetName = "Graph"
     canvas.get_tk_widget().grid(sticky='nsew')
-    set_window_size((lambda x: GRAPH_ONLY_SIZE if x==None else RANK_AND_GRAPH_SIZE)(find_widget(get_master_window(frame), "Ranking_frame")), frame)
+    set_window_size((lambda x: GRAPH_ONLY_SIZE if x==0 else RANK_AND_GRAPH_SIZE)(find_widget(get_master_window(frame), "Ranking_frame").winfo_ismapped()), frame)
     return graph
-
-def show_ranking(frame):
-    master_window = get_master_window(frame)
-    swap_ranking_buttons(master_window)
-
-    window_size = DEFAULT_WINDOW_SIZE
-    graph = find_widget(master_window, "Graph_frame")
-    if graph == None:
-        window_size = RANK_ONLY_SIZE
-    else:
-        if not graph.winfo_ismapped():
-            window_size = RANK_ONLY_SIZE
-        else:
-            window_size = RANK_AND_GRAPH_SIZE
-
-    set_window_size(window_size, master_window)
-
-    if (rank_frame:=find_widget(master_window, "Ranking_frame")) != None:
-        rank_frame.grid()
-    else:
-        ranking_frame = tk.Frame(master_window, background="light gray", padx=5, pady=5)
-        ranking_frame.widgetName = "Ranking_frame"
-        ranking_frame.grid_rowconfigure(1, weight=1)
-        ranking_frame.grid(row = 0, column=2, rowspan=3, sticky='nsew')
-
-        ranking_title = tk.Label(ranking_frame, text="Team ranking")
-        ranking_title.grid(row=0, column=0, sticky='nw')
-
-        rank_box = Treeview(ranking_frame, columns=2, show="headings")
-        
-        rank_box['columns']=('Rank', 'Team', 'Score')
-        rank_box.column('#0', width=0)
-        rank_box.column('Rank', width=40, anchor='e')
-        rank_box.column('Team', width=200)
-        rank_box.column('Score', width=40)
-
-        rank_box.heading('#0', text='')
-        rank_box.heading('Rank', text='Rank')
-        rank_box.heading('Team', text='Team')
-        rank_box.heading('Score', text='Score')
-        rank_box.grid(row=1, column=0, sticky='nsew')
-
-        
-        sb=tk.Scrollbar(ranking_frame, orient='vertical')
-        rank_box.config(yscrollcommand=sb.set)
-        sb.config(command = rank_box.yview, width=15)
-        sb.grid(row=0, column=1, rowspan=3, sticky='ns')
-
-        data = ["# of Tickets", "Update Age >=30"]
-        team_dict = dbi.create_dictionary(dbi.get_tables()[0],dbi.get_teams(), data)
-
-        team_rank = calculate_team_score(team_dict)
-        
-        team_rank = sorted(team_rank.items(), key=lambda x:x[1])
-
-        for index in range(len(team_rank)):
-            rank_box.insert("",'end', values=([index+1]+(list)(team_rank[index])))
-
-def calculate_team_score(team_dict):
-    team_data = {}
-    team_score = {}
-    num_tickets = "# of Tickets"
-    untouched = "Update Age >=30"
-    #calculate Grand Total first
-    team_data["Grand Total"] = {}
-    team_data["Grand Total"][num_tickets] = dbi.process_dictionary(team_dict, "Grand Total", num_tickets)[1]
-
-    for team in team_dict.keys():
-        if team != "Grand Total":
-            team_data[team] = {}        
-            team_data[team][num_tickets] = dbi.process_dictionary(team_dict, team, num_tickets)[1]
-            team_data[team][untouched] = dbi.process_dictionary(team_dict, team, untouched)[1]
-            # % of Grand Total last 4 weeks
-            avg_pct_total_arr =[ \
-                np.divide(t,GT)*100  \
-                for t, GT in zip(team_data[team][num_tickets][-4:], team_data["Grand Total"][num_tickets][-4:])]
-            
-            # Avg % of Grand Total
-            avg_pct_total = np.nanmean(avg_pct_total_arr)
-            
-            # Calculate % of Grand Total this week
-            # subtract avg_pct_total to get deviation (neg is good)
-            # add in % untouched
-            # round to 3 decimal places
-            team_score[team] = round(   (np.divide(team_data[team][num_tickets][-1], \
-                                         team_data["Grand Total"][num_tickets][-1])*100) \
-                                      -  avg_pct_total \
-                                      + (np.divide(team_data[team][untouched][-1], \
-                                         team_data["Grand Total"][num_tickets][-1])*100), \
-                               3)
-
-
-    return team_score
 
 def unselect_all(selection_frame):
     if (team_selection := find_widget(selection_frame, "Teams_treeview")) != None:
@@ -407,7 +356,26 @@ def unselect_all(selection_frame):
     swap_ranking_buttons(selection_frame)                
     set_window_size(DEFAULT_WINDOW_SIZE, selection_frame)
 
-    
+def show_ranking(frame):
+    master_window = get_master_window(frame)
+    swap_ranking_buttons(master_window)
+
+    window_size = DEFAULT_WINDOW_SIZE
+    graph = find_widget(master_window, "Graph_frame")
+    if graph == None:
+        window_size = RANK_ONLY_SIZE
+    else:
+        if not graph.winfo_ismapped():
+            window_size = RANK_ONLY_SIZE
+        else:
+            window_size = RANK_AND_GRAPH_SIZE
+
+    set_window_size(window_size, master_window)
+
+    if (rank_frame:=find_widget(master_window, "Ranking_frame")) != None:
+        rank_frame.grid()
+    else:
+        create_ranking_frame(master_window)
 
 def hide_ranking(frame):
     rank_button_frame = find_widget(master_window:=get_master_window(frame), "Ranking_frame")
@@ -451,6 +419,42 @@ def swap_ranking_buttons(frame):
                 show_rank_button.grid()
         else:
             show_rank_button.grid()
+
+def calculate_team_score(team_dict):
+    team_data = {}
+    team_score = {}
+    num_tickets = "# of Tickets"
+    untouched = "Update Age >=30"
+    #calculate Grand Total first
+    team_data["Grand Total"] = {}
+    team_data["Grand Total"][num_tickets] = dbi.process_dictionary(team_dict, "Grand Total", num_tickets)[1]
+
+    for team in team_dict.keys():
+        if team != "Grand Total":
+            team_data[team] = {}        
+            team_data[team][num_tickets] = dbi.process_dictionary(team_dict, team, num_tickets)[1]
+            team_data[team][untouched] = dbi.process_dictionary(team_dict, team, untouched)[1]
+            # % of Grand Total last 4 weeks
+            avg_pct_total_arr =[ \
+                np.divide(t,GT)*100  \
+                for t, GT in zip(team_data[team][num_tickets][-4:], team_data["Grand Total"][num_tickets][-4:])]
+            
+            # Avg % of Grand Total
+            avg_pct_total = np.nanmean(avg_pct_total_arr)
+            
+            # Calculate % of Grand Total this week
+            # subtract avg_pct_total to get deviation (neg is good)
+            # add in % untouched
+            # round to 3 decimal places
+            team_score[team] = round(   (np.divide(team_data[team][num_tickets][-1], \
+                                         team_data["Grand Total"][num_tickets][-1])*100) \
+                                      -  avg_pct_total \
+                                      + (np.divide(team_data[team][untouched][-1], \
+                                         team_data["Grand Total"][num_tickets][-1])*100), \
+                               3)
+
+
+    return team_score
 
 #endregion
    

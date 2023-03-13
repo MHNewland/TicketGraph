@@ -108,6 +108,7 @@ def get_data_headers(engine = sa.create_engine("sqlite:///TicketData.db")):
         return columns
 #endregion
 
+#region DB processing
 def process_dictionary(team_dict, team, data_requested):
     date_array = [] 
     data_array = []
@@ -162,3 +163,4 @@ def process_dictionary(team_dict, team, data_requested):
 
     return (date_array, data_array)
 
+#endregion

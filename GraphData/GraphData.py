@@ -61,6 +61,7 @@ def display_graph(team_dict, teams, data_requested):
     fig.set_size_inches(1350*px, 550*px)
     fig.autofmt_xdate()
     fig.tight_layout(pad=1, w_pad=0, h_pad=1)
+    #hover=2 means Transient 
     cursor = mpc.cursor(hover=2)
     @cursor.connect("add")
     def on_add(sel):
