@@ -69,11 +69,23 @@ That’s only an example though, and your mentors can explain further.*
 There are a few places where I've cleaned the data.
 In the file I used to create the database, I had to replace all instances of character – (En Dash, unicode: U+2013) with - (Hyphen Minus, unicode U+002D) so if the list was sent with regular text, it wouldn't break.
 
+Another spot is within DBInfo.py create_dictionary method. I created a list of valid teams and data headers by pulling from the database again, and created another method called validate_information to compare each requested information to the valid set.
+
 </br>
 
 ## Analyze your data
-*This is usually the more fun part and probably has more approaches
-than I can write here.*
+Within GUI.py I have both a data table to show snapshot information about the team that's requested.
+
+Within the dataframe, if "# of Tickets" is requested, it will calculate the X (1-4) week average (if data is missing for any of those weeks), the rate of change over the last 4 weeks, the % of the total tickets, and the percent of the tickets that are untouched.
+
+I also created a team ranking frame that shows most improved to most worsened. It's calculated as
+
+```
+(average team ticket % of Grand Total for last 4 weeks) 
+- (this week's % of Grand Total) 
++ (% of tickets that haven't been touched in 30+ days)
+```
+
 
 </br>
 
