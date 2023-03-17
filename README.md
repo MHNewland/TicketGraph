@@ -11,6 +11,10 @@ No packages will be needed if ran from the "Ticket Graph.exe" file within the "T
 
 Requirements to run the python files within the GraphData foler are listed in "requirements.txt".
 
+```
+pip install -r requirements.txt
+```
+
 ### List of modules: 
 * matplotlib==3.6.3
 * mplcursors==0.5.2
@@ -39,9 +43,11 @@ I used VBA to automate this portion. Those excel files were used to create the T
 
 ### In the project
 
-Within GraphData.py, the information is read in using pandas and SQLAlchemy within the "create_dictionary()" method.
+Within DBInfo.py, the information is read in using pandas and SQLAlchemy within the "create_dictionary()" method.
 The param_list variable is a list containing "Team" and "Date" by default and adds any other requested data to the list.
 The team_list contains a string created by taking the requested team names, validating the list, then joining the teams together in a string with "or" in between.
+
+https://github.com/MHNewland/TicketGraph/blob/0d4541c56cb0ad3640dfeb280d16a03bd5f197e1/GraphData/DBInfo.py#L42-L43
 
 ```python
 data = pd.read_sql(sa.text(f"select {', '.join(param_list)} from {table}\
@@ -69,7 +75,7 @@ Another spot is within DBInfo.py create_dictionary method. I created a list of v
 </br>
 
 ## Analyze your data
-In GUI.py I have both a data table to show snapshot information about the team that's requested.
+In GUI.py I have both a trend line graph to show historical information and a data table to show snapshot information about the teams that are requested.
 
 Within the dataframe, if "# of Tickets" is requested, it will calculate the X (1-4) week average (if data is missing for any of those weeks), the rate of change over the last 4 weeks, the percent of the total tickets, and the percent of the tickets that are untouched.
 
