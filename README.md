@@ -6,10 +6,15 @@ Due to being in the healthcare system, I am not able to show the raw Excel sheet
 
 </br>
 
+## Supported OS
+Currently this application only supports Windows OS.
+
 ## Packages needed
 No packages will be needed if ran from the "Ticket Graph.exe" file within the "Ticket Graph app" folder, only other file that's needed is a TicketData.db file with an actual database within it.
 
 Requirements to run the python files within the GraphData foler are listed in "requirements.txt".
+
+To install the requirements, from the GraphData folder, run
 
 ```
 pip install -r requirements.txt
@@ -27,6 +32,12 @@ pip install -r requirements.txt
 
 ## Special instructions
 There are two options in running the app. You can either launch the "Ticket Graph.exe" application from the "Ticket Graph app" folder, or you can run "GUI.py" from the "GraphData" folder.
+
+The TicketData.db must be in whatever home folder you're running from. If you try to run the application from the TicketGraph folder using 
+```
+python .\TicketGraph\GraphData\GUI.py
+```
+it will not work as it won't be able to find the database properly. You must change directories to the GraphData directory and run it from there.
 
 </br>
 </br>
@@ -49,11 +60,6 @@ The team_list contains a string created by taking the requested team names, vali
 
 https://github.com/MHNewland/TicketGraph/blob/0d4541c56cb0ad3640dfeb280d16a03bd5f197e1/GraphData/DBInfo.py#L42-L43
 
-```python
-data = pd.read_sql(sa.text(f"select {', '.join(param_list)} from {table}\
-                                where ({''.join(team_list)})"), con=conn).values
-
-``` 
 For example if create_dictionary was called with these parameters:
 ```python
 teams = ["End User Computing", "Service Desk"]
@@ -71,6 +77,8 @@ There are a few places where I've cleaned the data.
 In the file I used to create the database, I had to replace all instances of character – (En Dash, unicode: U+2013) with - (Hyphen Minus, unicode U+002D) so if the list was sent with regular text, it wouldn't break.
 
 Another spot is within DBInfo.py create_dictionary method. I created a list of valid teams and data headers by pulling from the database again, and created another method called validate_information to compare each requested information to the valid set.
+
+https://github.com/MHNewland/TicketGraph/blob/0d4541c56cb0ad3640dfeb280d16a03bd5f197e1/GraphData/DBInfo.py#L63-L72
 
 </br>
 

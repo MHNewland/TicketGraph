@@ -230,6 +230,7 @@ def create_ranking_frame(master_window):
     ranking_frame.widgetName = "Ranking_frame"
     ranking_frame.grid_rowconfigure(1, weight=1)
     ranking_frame.grid(row = 0, column=2, rowspan=3, sticky='nsew')
+    ranking_frame.grid_remove()
 
     ranking_title = tk.Label(ranking_frame, text="Team ranking")
     ranking_title.grid(row=0, column=0, sticky='nw')
@@ -375,6 +376,7 @@ def show_ranking(frame):
     if (rank_frame:=find_widget(master_window, "Ranking_frame")) != None:
         rank_frame.grid()
     else:
+        #recreate the frame if it gets deleted somehow
         create_ranking_frame(master_window)
 
 def hide_ranking(frame):
@@ -533,6 +535,7 @@ def create_app(window):
     create_selection_frame(window)
     create_data_table(window)
     create_selection_button_frame(window)
+    create_ranking_frame(window)
     create_ranking_button_frame(window)
 
 def quit_me(window):
