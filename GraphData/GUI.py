@@ -154,9 +154,9 @@ def tab_info(frame, data_name, team_name, graph, team_dict):
     roc = 0
     
     grand_total = team_dict["Grand Total"]
-    today=dt.date.today()
     xdata=data_line.get_xdata()
     ydata=data_line.get_ydata()
+    today=xdata[-1]
     latest_date = xdata[-1].strftime("%d-%m-%Y")
     weeks_before = 4
     # if the line doesn't have at least 4 weeks worth of data
@@ -331,7 +331,11 @@ def graph_data(frame, team_dict, teams_checked, data_checked):
     canvas.draw()
     canvas.get_tk_widget().widgetName = "Graph"
     canvas.get_tk_widget().grid(sticky='nsew')
-    set_window_size((lambda x: GRAPH_ONLY_SIZE if x==0 else RANK_AND_GRAPH_SIZE)(find_widget(get_master_window(frame), "Ranking_frame").winfo_ismapped()), frame)
+    ranking_frame = find_widget(get_master_window(frame), "Ranking_frame");
+    if ranking_frame!=None:
+        set_window_size((lambda x: GRAPH_ONLY_SIZE if x==0 else RANK_AND_GRAPH_SIZE)(ranking_frame.winfo_ismapped()), frame)
+    else:
+        set_window_size(GRAPH_ONLY_SIZE, frame)
     return graph
 
 def unselect_all(selection_frame):
