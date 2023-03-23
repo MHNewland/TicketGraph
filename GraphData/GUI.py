@@ -214,13 +214,16 @@ def tab_info(frame, data_name, team_name, graph, team_dict):
             pct_untouched_label = tk.Label(frame, text=f"% not touched in 30 days:", font=label_font, background="light gray")
             pct_untouched_label.grid(row=5, column=0, sticky='w')
             pct_untouched_num = tk.Label(frame, text=f"{round(pct_untouched,2)}%", font=label_font, background="light gray")
-            pct_untouched_num.grid(row=5, column=1, sticky='w')        
-        if team_name != "Grand Total":
-            pct_total = np.divide(this_week, grand_total[latest_date][data_name])*100
-            pct_total_label = tk.Label(frame, text=f"% of Total:", font=label_font, background="light gray")
-            pct_total_label.grid(row=6, column=0, sticky='w')
-            pct_total_num = tk.Label(frame, text=f"{round(pct_total,2)}%", font=label_font, background="light gray")
-            pct_total_num.grid(row=6, column=1, sticky='w')
+            pct_untouched_num.grid(row=5, column=1, sticky='w')   
+        try:     
+            if team_name != "Grand Total":
+                pct_total = np.divide(this_week, grand_total[latest_date][data_name])*100
+                pct_total_label = tk.Label(frame, text=f"% of Total:", font=label_font, background="light gray")
+                pct_total_label.grid(row=6, column=0, sticky='w')
+                pct_total_num = tk.Label(frame, text=f"{round(pct_total,2)}%", font=label_font, background="light gray")
+                pct_total_num.grid(row=6, column=1, sticky='w')
+        except KeyError as err:
+            print("database too old")
 
 #endregion
 
@@ -300,10 +303,10 @@ def get_data(frame):
         if len(teams_checked)==0 or len(data_checked)==0:
             return
         
-        #if # of tickets is selected, grab data for update age >=30 to calculate % haven't been touched
         data_needed = list(data_checked)
         teams_needed = list(teams_checked)
 
+        #if # of tickets is selected, grab data for update age >=30 to calculate % haven't been touched
         if "Grand Total" not in teams_checked:
             teams_needed.append("Grand Total")
         if "# of Tickets" in data_checked and "Update Age >=30" not in data_checked:
