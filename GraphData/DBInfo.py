@@ -132,7 +132,8 @@ def process_dictionary(team_dict, team, data_requested):
         dt.date(2022, 12, 22),
         dt.date(2022, 12, 29),
         dt.date(2023, 1,  5 ), 
-        dt.date(2023, 1,  19)
+        dt.date(2023, 1,  19),
+        dt.date(2023, 4, 20)
     ]
 
     # if date_array starts after a missing report,
