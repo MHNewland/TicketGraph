@@ -120,7 +120,7 @@ def process_dictionary(team_dict, team, data_requested):
         date_array.append(date)
         data_array.append(data_dict[data_requested])
 
-    today = dt.date.today()
+    today = dt.date(2023, 4, 20)
     num_weeks = (today - date_array[0]).days//7
 
     missing_reports=[
